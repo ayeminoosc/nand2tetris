@@ -8,16 +8,8 @@ public interface Parser {
     void next() throws IOException;
 
     CommandType commandType();
+
+    Instruction instruction();
 }
 
-enum CommandType {
-    ARITHMETIC,
-    PUSH,
-    POP,
-    LABEL,
-    GOTO,
-    IF,
-    FUNCTION,
-    RETURN,
-    CALL
-}
+
