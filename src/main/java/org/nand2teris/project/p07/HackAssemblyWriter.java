@@ -23,7 +23,27 @@ public class HackAssemblyWriter implements CodeWriter {
             case "sub":
                 sub();
                 break;
+            case "neg":
+                neg();
+            case "eq":
+                eq();
+                //todo: add logical commands
         }
+    }
+
+
+    @Override
+    public void writePushPop(CommandType pushOrPop, String segment, int index) throws IOException {
+        if (pushOrPop == CommandType.PUSH) {
+            pushSegment(convert(segment), index);
+        } else if (pushOrPop == CommandType.POP) {
+            popSegment(convert(segment), index);
+        }
+    }
+
+    @Override
+    public void close() {
+        writer.close();
     }
 
     private void add() throws IOException {
@@ -52,19 +72,60 @@ public class HackAssemblyWriter implements CodeWriter {
         writer.println("M=M+1");
     }
 
-
-    @Override
-    public void writePushPop(CommandType pushOrPop, String segment, int index) throws IOException {
-        if (pushOrPop == CommandType.PUSH) {
-            pushSegment(convert(segment), index);
-        } else if (pushOrPop == CommandType.POP) {
-            popSegment(convert(segment), index);
-        }
+    private void neg(){
+        popD();
+        writer.println("D=-D");
+        pushD();
     }
 
-    @Override
-    public void close() {
-        writer.close();
+    private void eq(){
+        String setTrue = randomLabel();
+        popD();
+        writer.println("@SP");
+        writer.println("M=M-1");
+        writer.println("A=M");
+        writer.println("D=D-M");
+
+        writer.println("@" + setTrue);
+        writer.println("D;JEQ");
+
+
+        //set false
+        writer.println("@SP");
+        writer.println("A=M");
+        writer.println("M=0");
+        writer.println("@SP");
+        writer.println("M=M+1");
+        writer.println("@E"+setTrue);
+        writer.println("0;JEQ");
+        //set true
+        writer.println("("+setTrue+")");
+        writer.println("@SP");
+        writer.println("A=M");
+        writer.println("M=-1");
+        writer.println("@SP");
+        writer.println("M=M+1");
+        writer.println("(E"+setTrue+")");
+    }
+
+    private void gt(){
+
+    }
+
+    private void lt(){
+
+    }
+
+    private void and(){
+
+    }
+
+    private void or(){
+
+    }
+
+    private void not(){
+
     }
 
     private void pushStatic(int index) {
@@ -165,6 +226,20 @@ public class HackAssemblyWriter implements CodeWriter {
             writer.println("@" + segment);
             writer.println("D=M+D");
         }
+    }
+
+    private static final String ALPHA_NUMERIC_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+    private String randomLabel(){
+        return randomAlphaNumeric(5);
+    }
+    private String randomAlphaNumeric(int count) {
+        StringBuilder builder = new StringBuilder();
+        while (count-- != 0) {
+            int character = (int)(Math.random()*ALPHA_NUMERIC_STRING.length());
+            builder.append(ALPHA_NUMERIC_STRING.charAt(character));
+        }
+        return builder.toString();
     }
 
     private Symbol convert(String segment) {
