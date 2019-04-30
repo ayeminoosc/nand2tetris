@@ -25,8 +25,10 @@ public class HackAssemblyWriter implements CodeWriter {
                 break;
             case "neg":
                 neg();
+                break;
             case "eq":
                 eq();
+                break;
                 //todo: add logical commands
         }
     }
@@ -75,6 +77,7 @@ public class HackAssemblyWriter implements CodeWriter {
     private void neg(){
         popD();
         writer.println("D=-D");
+        writer.flush();
         pushD();
     }
 
