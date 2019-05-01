@@ -26,10 +26,9 @@ public class HackAssemblyWriter implements CodeWriter {
             case "neg":
                 neg();
                 break;
-            case "eq":
-                eq();
+            default:
+                logicalOperator(command);
                 break;
-                //todo: add logical commands
         }
     }
 
@@ -81,17 +80,29 @@ public class HackAssemblyWriter implements CodeWriter {
         pushD();
     }
 
-    private void eq(){
+    private void logicalOperator(String operator){
         String setTrue = randomLabel();
+
         popD();
         writer.println("@SP");
         writer.println("M=M-1");
         writer.println("A=M");
-        writer.println("D=D-M");
+        writer.println("D=M-D");
 
         writer.println("@" + setTrue);
-        writer.println("D;JEQ");
 
+        switch(operator){
+            case "eq":
+                writer.println("D;JEQ");break;
+            case "lt":
+                writer.println("D;JLT");break;
+            case "gt":
+                writer.println("D;JGT");break;
+            case "lte":
+                writer.println("D;JLE");break;
+            case "gte":
+                writer.println("D;JGE");break;
+        }
 
         //set false
         writer.println("@SP");
@@ -109,14 +120,6 @@ public class HackAssemblyWriter implements CodeWriter {
         writer.println("@SP");
         writer.println("M=M+1");
         writer.println("(E"+setTrue+")");
-    }
-
-    private void gt(){
-
-    }
-
-    private void lt(){
-
     }
 
     private void and(){
