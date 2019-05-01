@@ -1,0 +1,19 @@
+push constant 1
+neg
+push constant 1
+neg
+and
+push constant 1
+neg
+push constant 0
+and
+
+push constant 1
+neg
+push constant 1
+neg
+or
+push constant 1
+neg
+push constant 0
+or

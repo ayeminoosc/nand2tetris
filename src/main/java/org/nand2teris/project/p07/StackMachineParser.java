@@ -29,7 +29,7 @@ public class StackMachineParser implements Parser {
 
     private String readNext() throws IOException {
         String line = reader.readLine();
-        if (line != null && line.trim().startsWith("//")) return readNext();
+        if (line != null && (line.trim().startsWith("//")|| line.trim().length() == 0 )) return readNext();
         else return line;
     }
 

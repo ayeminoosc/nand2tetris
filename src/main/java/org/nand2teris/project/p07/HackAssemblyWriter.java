@@ -26,6 +26,10 @@ public class HackAssemblyWriter implements CodeWriter {
             case "neg":
                 neg();
                 break;
+            case "and":
+            case "or":
+                andOr(command);
+                break;
             default:
                 logicalOperator(command);
                 break;
@@ -122,12 +126,17 @@ public class HackAssemblyWriter implements CodeWriter {
         writer.println("(E"+setTrue+")");
     }
 
-    private void and(){
-
-    }
-
-    private void or(){
-
+    private void andOr(String andOr){
+        andOr = andOr.equals("and") ? "M=D&M" : "M=D|M";
+        popD();
+        writer.println(String.join(System.getProperty("line.separator"),
+                "@SP",
+                "M=M-1",
+                "A=M",
+                andOr,
+                "@SP",
+                "M=M+1"
+        ));
     }
 
     private void not(){
