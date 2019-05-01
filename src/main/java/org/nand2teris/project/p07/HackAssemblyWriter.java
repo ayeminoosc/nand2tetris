@@ -30,6 +30,9 @@ public class HackAssemblyWriter implements CodeWriter {
             case "or":
                 andOr(command);
                 break;
+            case "not":
+                not();
+                break;
             default:
                 logicalOperator(command);
                 break;
@@ -140,7 +143,14 @@ public class HackAssemblyWriter implements CodeWriter {
     }
 
     private void not(){
-
+        writer.println(String.join(System.getProperty("line.separator"),
+                "@SP",
+                "M=M-1",
+                "A=M",
+                "M=!M",
+                "@SP",
+                "M=M+1"
+        ));
     }
 
     private void pushStatic(int index) {
