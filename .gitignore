@@ -1,2 +1,7 @@
 .idea
 *.iml
+*.class
+.gradle
+*.asm
+*.out
+*.dat
