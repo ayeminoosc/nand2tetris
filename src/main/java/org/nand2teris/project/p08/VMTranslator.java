@@ -20,6 +20,8 @@ public class VMTranslator {
                 writer.writeMemoryAccessCommand(parser.instruction().command, parser.instruction().args[0], Integer.parseInt(parser.instruction().args[1]));
             }else if(parser.commandType() == CommandType.BRANCHING){
                 writer.writeBranchingCommand(parser.instruction().command, parser.instruction().args[0]);
+            }else if(parser.commandType() == CommandType.FUNCTION){
+                writer.writeFunctionCommand();
             }
         }
 

@@ -61,8 +61,14 @@ public class HackAssemblyWriter implements CodeWriter {
     }
 
     @Override
-    public void writeFunctionCommand() {
-
+    public void writeFunctionCommand(String command, String funcName, String num) {
+        if(command.equals("function")) {
+            writeFunctionDeclare(funcName, Integer.parseInt(num));
+        }else if(command.equals("call")){
+            writeFunctionCall(funcName, Integer.parseInt(num));
+        }else if(command.equals("return")){
+            writeFunctionReturn();
+        }
     }
 
     @Override
@@ -70,12 +76,130 @@ public class HackAssemblyWriter implements CodeWriter {
         writer.close();
     }
 
+    /**
+     * VM implementation for Function Declare
+     * 1. mark label for function entry
+     * 2. Set up the local segment of the called function
+     * 3. init local args to 0
+     * @param funcName
+     * @param numberOfLocalVar
+     */
+    private void writeFunctionDeclare(String funcName, int numberOfLocalVar) {
+        // 1. mark lable for function entry
+        writer.println("(" + funcName + ")");
+
+        // 2. Set up the local segment of the called function
+        writer.println("@SP");
+        writer.println("D=A");
+        writer.println("@LCL");
+        writer.println("M=D");
+
+        // 3. init local args to 0
+        for(int i=0 ;i< numberOfLocalVar; i++){
+            pushSegment(CONST, 0);
+        }
+
+    }
+
+    /**
+     *  VM implementation for Function call
+     *  1. Sets arg
+     *  2. Saves the caller's frame (return_address, LCL, ARG, THIS, THAT)
+     *  3. Jump to execute callee
+     * @param funcName
+     * @param numberOfArgs
+     */
+    private void writeFunctionCall(String funcName, int numberOfArgs){
+        String returnAddress = randomLabel();
+        //  1. setting up args
+        writer.println("@SP");
+        writer.println("D=M");
+        writer.println("@ARG");
+        writer.println("M=D-"+ numberOfArgs);
+
+        // 2. save the caller's frame
+
+        // 2.1 saving return address
+        writer.println("@" + returnAddress);
+        writer.println("D=A");
+        pushD();
+
+        // 2.2 saving LCL
+        writer.println("@LCL");
+        writer.println("D=M");
+        pushD();
+
+        // 2.3 saving ARG
+        writer.println("@ARG");
+        writer.println("D=M");
+        pushD();
+
+        // 2.4 saving THIS
+        writer.println("@THIS");
+        writer.println("D=M");
+        pushD();
+
+        // 2.5 saving THAT
+        writer.println("@THAT");
+        writer.println("D=M");
+        pushD();
+
+        // 3. Jump to execute callee
+        writeGoto(funcName);
+
+        writer.println("("+ returnAddress + ")"); //marking return address
+    }
+
+    /**
+     * VM implementation for Function Return
+     * 1. copy the return value onto argument 0
+     * 2. restore segment pointers of the caller
+     * 3. clear the stack
+     * 4. set SP for the caller
+     * 5. jump to the return address within the caller's code
+     */
+    private void writeFunctionReturn(){
+        // 1. copy the return value onto argument 0
+        popSegment(ARG, 0);
+
+        // 2. restore segment pointers of the caller
+        // RAM[SP] = RAM[LCL]
+        writer.println("@LCL");
+        writer.println("D=M");
+        writer.println("@SP");
+        writer.println("M=D");
+        popSegment(THAT, 0);
+        popSegment(THIS, 0);
+        popSegment(ARG, 0);
+        popSegment(LCL, 0);
+        //storing return_address in R13 General purpose register
+        popD();
+        writer.println("@R13");
+        writer.println("M=D");
+
+        // 4. set SP for the caller
+        // (RAM[SP] = RAM[LCL])
+        writer.println("@ARG");
+        writer.println("D=M");
+        writer.println("@SP");
+        writer.println("M=D");
+
+        // 3. clear the stack
+        //stack is auto clear because we move SP pointer
+
+        // 5. jump to return address
+        writer.println("@R13");
+        writer.println("D=M");
+        writer.println("A=D");
+        writer.println("0;JEQ");
+    }
+
     private void writeLabel(String label) {
         writer.println("(" + label + ")");
     }
 
-    private void writeGoto(String command) {
-        writer.println("@" + command);
+    private void writeGoto(String label) {
+        writer.println("@" + label);
         writer.println("0;JMP");
     }
 
@@ -83,19 +207,6 @@ public class HackAssemblyWriter implements CodeWriter {
         popD();
         writer.println("@"+command);
         writer.println("D;JNE");
-    }
-
-    private void writeFunction(String command) {
-
-    }
-
-
-    private void writeCall(String command) {
-
-    }
-
-    private void writeReturn(String command) {
-
     }
 
     private void add() throws IOException {
@@ -223,7 +334,7 @@ public class HackAssemblyWriter implements CodeWriter {
         ));
     }
 
-    private void pushSegment(Symbol segment, int index) throws IOException {
+    private void pushSegment(Symbol segment, int index) {
         switch (segment) {
             case CONST:
                 writer.println("@" + index);
@@ -302,6 +413,7 @@ public class HackAssemblyWriter implements CodeWriter {
     private String randomLabel(){
         return randomAlphaNumeric(5);
     }
+
     private String randomAlphaNumeric(int count) {
         StringBuilder builder = new StringBuilder();
         while (count-- != 0) {

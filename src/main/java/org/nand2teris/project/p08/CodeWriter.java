@@ -6,6 +6,6 @@ public interface CodeWriter {
     void writeArithmeticCommand(String command) throws IOException;
     void writeMemoryAccessCommand(String command, String segment, int index) throws IOException;
     void writeBranchingCommand(String command, String label);
-    void writeFunctionCommand();
+    void writeFunctionCommand(String command, String funcName, String num);
     void close();
 }
