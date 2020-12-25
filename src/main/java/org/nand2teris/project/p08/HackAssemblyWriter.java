@@ -16,6 +16,7 @@ public class HackAssemblyWriter implements CodeWriter {
 
     @Override
     public void writeArithmeticCommand(String command) throws IOException {
+        writer.println("// "+ command);
         switch (command) {
             case "add":
                 add();
@@ -42,6 +43,7 @@ public class HackAssemblyWriter implements CodeWriter {
 
     @Override
     public void writeMemoryAccessCommand(String pushOrPop, String segment, int index) throws IOException {
+        writer.println("// " +pushOrPop + " " + segment + " " + index);
         if (pushOrPop.equals("push")) {
             pushSegment(convert(segment), index);
         } else if (pushOrPop.equals("pop")) {
@@ -51,6 +53,7 @@ public class HackAssemblyWriter implements CodeWriter {
 
     @Override
     public void writeBranchingCommand(String command, String label){
+        writer.println("// " + command + " " + label);
         if(command.equals("label")){
             writeLabel(label);
         }else if(command.equals("goto")){
@@ -62,11 +65,15 @@ public class HackAssemblyWriter implements CodeWriter {
 
     @Override
     public void writeFunctionCommand(String command, String funcName, String num) {
+
         if(command.equals("function")) {
+            writer.println("// function " + funcName + " "+ num);
             writeFunctionDeclare(funcName, Integer.parseInt(num));
         }else if(command.equals("call")){
+            writer.println("// call " + funcName + " " + num);
             writeFunctionCall(funcName, Integer.parseInt(num));
         }else if(command.equals("return")){
+            writer.println("// return ");
             writeFunctionReturn();
         }
     }
@@ -89,16 +96,19 @@ public class HackAssemblyWriter implements CodeWriter {
         writer.println("(" + funcName + ")");
 
         // 2. Set up the local segment of the called function
-        writer.println("@SP");
-        writer.println("D=A");
-        writer.println("@LCL");
-        writer.println("M=D");
+//        writer.println("//setup local seg");
+//        writer.println("@SP");
+//        writer.println("D=M");
+//        writer.println("@LCL");
+//        writer.println("M=D");
 
-        // 3. init local args to 0
+        writer.println("//start of Func Declare");
         for(int i=0 ;i< numberOfLocalVar; i++){
+            writer.println("//init local args to 0");
             pushSegment(CONST, 0);
         }
 
+        writer.println("");
     }
 
     /**
@@ -112,42 +122,70 @@ public class HackAssemblyWriter implements CodeWriter {
     private void writeFunctionCall(String funcName, int numberOfArgs){
         String returnAddress = randomLabel();
         //  1. setting up args
-        writer.println("@SP");
-        writer.println("D=M");
-        writer.println("@ARG");
-        writer.println("M=D-"+ numberOfArgs);
+//        writer.println("//settings up args");
+//        writer.println("@SP");
+//        writer.println("D=M");
+//        writer.println("@ARG");
+//        writer.println("M=D-"+ numberOfArgs);
 
         // 2. save the caller's frame
-
-        // 2.1 saving return address
+        writer.println("//start of function call");
+        //push return-address
+        writer.println("//push return-address");
         writer.println("@" + returnAddress);
         writer.println("D=A");
         pushD();
 
-        // 2.2 saving LCL
+        //push LCL
+        writer.println("//push LCL");
         writer.println("@LCL");
         writer.println("D=M");
         pushD();
 
-        // 2.3 saving ARG
+        //push ARG
+        writer.println("//push ARG");
         writer.println("@ARG");
         writer.println("D=M");
         pushD();
 
-        // 2.4 saving THIS
+        //push THIS
+        writer.println("//push THIS");
         writer.println("@THIS");
         writer.println("D=M");
         pushD();
 
-        // 2.5 saving THAT
+        //push THAT
+        writer.println("//push THAT");
         writer.println("@THAT");
         writer.println("D=M");
         pushD();
 
+        //ARG = SP - n - 5
+        writer.println("//ARG = SP - n - 5 ");
+        writer.println("//Reposition ARG (n = number of args.)");
+        writer.println("@SP");
+        writer.println("D=M");
+        writer.println("@"+(numberOfArgs+5));
+        writer.println("D=D-A");
+        writer.println("@ARG");
+        writer.println("M=D");
+
+        //LCL = SP
+        writer.println("//LCL = SP");
+        writer.println("@SP");
+        writer.println("D=M");
+        writer.println("@LCL");
+        writer.println("M=D");
+
+
         // 3. Jump to execute callee
+        writer.println("//goto f");
         writeGoto(funcName);
 
         writer.println("("+ returnAddress + ")"); //marking return address
+
+        writer.println("//end of Func Call");
+        writer.println("");
     }
 
     /**
@@ -159,35 +197,114 @@ public class HackAssemblyWriter implements CodeWriter {
      * 5. jump to the return address within the caller's code
      */
     private void writeFunctionReturn(){
-        // 1. copy the return value onto argument 0
-        popSegment(ARG, 0);
+        writer.println("//FRAME = *LCL");
+        writer.println("//FRAME is a temporary variable");
+        writer.println("//R14 will be use as FRAME");
 
-        // 2. restore segment pointers of the caller
-        // RAM[SP] = RAM[LCL]
         writer.println("@LCL");
         writer.println("D=M");
-        writer.println("@SP");
+        writer.println("@R14");
         writer.println("M=D");
-        popSegment(THAT, 0);
-        popSegment(THIS, 0);
-        popSegment(ARG, 0);
-        popSegment(LCL, 0);
-        //storing return_address in R13 General purpose register
-        popD();
+        writer.println();
+
+        writer.println("//RET = *(FRAME - 5)");
+        writer.println("//put the return address in a temp var");
+        writer.println("//R13 will be use as RET");
+        writer.println("@R14");
+        writer.println("D=M");
+        writer.println("@5");
+        writer.println("A=D-A");
+        writer.println("D=M");
         writer.println("@R13");
         writer.println("M=D");
+        writer.println();
 
-        // 4. set SP for the caller
-        // (RAM[SP] = RAM[LCL])
+        writer.println("//*ARG = pop()");
+        popD();
         writer.println("@ARG");
-        writer.println("D=M");
+        writer.println("A=M");
+        writer.println("M=D");
+        writer.println();
+
+        writer.println("//SP = ARG + 1");
+        //@ARG
+        //D = M + 1
+        //@SP
+        //M=D
+        writer.println("@ARG");
+        writer.println("D=M+1");
         writer.println("@SP");
         writer.println("M=D");
+        writer.println();
 
-        // 3. clear the stack
-        //stack is auto clear because we move SP pointer
+        writer.println("//THAT = *(FRAME-1)");
+        //@R14
+        //D=M
+        //A=D-1
+        //D=M
+        //@THAT
+        //M=D
+        writer.println("@R14");
+        writer.println("D=M");
+        writer.println("A=D-1");
+        writer.println("D=M");
+        writer.println("@THAT");
+        writer.println("M=D");
+        writer.println();
 
-        // 5. jump to return address
+        writer.println("//THIS = *(FRAME-2)");
+        //@R14
+        //D=M
+        //@2
+        //A=D-A
+        //D=M
+        //@THIS
+        //M=D
+        writer.println("@R14");
+        writer.println("D=M");
+        writer.println("@2");
+        writer.println("A=D-A");
+        writer.println("D=M");
+        writer.println("@THIS");
+        writer.println("M=D");
+        writer.println();
+
+        writer.println("//ARG = *(FRAME-3)");
+        //@R14
+        //D=M
+        //@3
+        //A=D-A
+        //D=M
+        //@ARG
+        //M=D
+        writer.println("@R14");
+        writer.println("D=M");
+        writer.println("@3");
+        writer.println("A=D-A");
+        writer.println("D=M");
+        writer.println("@ARG");
+        writer.println("M=D");
+        writer.println();
+
+        writer.println("//LCL = *(FRAME-4)");
+        //@R14
+        //D=M
+        //@4
+        //A=D-A
+        //D=M
+        //@LCL
+        //M=D
+        writer.println("@R14");
+        writer.println("D=M");
+        writer.println("@4");
+        writer.println("A=D-A");
+        writer.println("D=M");
+        writer.println("@LCL");
+        writer.println("M=D");
+        writer.println();
+
+        // jump to return address
+        writer.println("//goto RET");
         writer.println("@R13");
         writer.println("D=M");
         writer.println("A=D");

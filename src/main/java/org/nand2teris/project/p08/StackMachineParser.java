@@ -66,7 +66,8 @@ public class StackMachineParser implements Parser {
         if (currentCommand == null) return;
         String[] tokens = currentCommand.split(" ");
         if (tokens[0].equals("push") || tokens[0].equals("pop") ||
-                tokens[0].equals("label") || tokens[0].equals("goto") || tokens[0].equals("if-goto")){
+                tokens[0].equals("label") || tokens[0].equals("goto") ||
+                tokens[0].equals("if-goto") || tokens[0].equals("function") || tokens[0].equals("call")){
             inst =  new Instruction(tokens[0], Arrays.copyOfRange(tokens, 1, tokens.length ));
         } else {
             inst = new Instruction(tokens[0]);

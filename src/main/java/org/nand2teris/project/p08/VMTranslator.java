@@ -21,7 +21,9 @@ public class VMTranslator {
             }else if(parser.commandType() == CommandType.BRANCHING){
                 writer.writeBranchingCommand(parser.instruction().command, parser.instruction().args[0]);
             }else if(parser.commandType() == CommandType.FUNCTION){
-                writer.writeFunctionCommand();
+                String funcName = parser.instruction().args != null && parser.instruction().args.length == 2 ? parser.instruction().args[0] : null;
+                String num = parser.instruction().args != null && parser.instruction().args.length == 2 ? parser.instruction().args[1] : null;
+                writer.writeFunctionCommand(parser.instruction().command, funcName, num);
             }
         }
 
