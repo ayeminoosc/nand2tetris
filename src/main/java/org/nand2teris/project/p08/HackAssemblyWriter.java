@@ -111,6 +111,16 @@ public class HackAssemblyWriter implements CodeWriter {
         writer.println("");
     }
 
+    public void writeInit(){
+        writer.println("//bootstrap sys.init");
+        writer.println("@256");
+        writer.println("D=A");
+        writer.println("@SP");
+        writer.println("M=D");
+        writeFunctionCall("Sys.init",0);
+
+    }
+
     /**
      *  VM implementation for Function call
      *  1. Sets arg

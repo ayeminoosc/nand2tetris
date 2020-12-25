@@ -11,7 +11,7 @@ public class VMTranslator {
 
         Parser parser = new StackMachineParser(args[0]);
         CodeWriter writer = new HackAssemblyWriter(args[1]);
-
+        writer.writeInit();
         while (parser.hasMoreCommands()) {
             parser.next();
             if (parser.commandType() == CommandType.ARITHMETIC_OR_LOGICAL) {

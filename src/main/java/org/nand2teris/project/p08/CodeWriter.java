@@ -8,4 +8,5 @@ public interface CodeWriter {
     void writeBranchingCommand(String command, String label);
     void writeFunctionCommand(String command, String funcName, String num);
     void close();
+    void writeInit();
 }

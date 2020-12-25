@@ -3,8 +3,11 @@ package org.nand2teris.project.p08;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class StackMachineParser implements Parser {
 
@@ -12,9 +15,25 @@ public class StackMachineParser implements Parser {
     private String currentCommand;
     private String nextCommand;
     private Instruction inst;
+    private List<Path> filePaths;
+    private int currentFilePathIndex = 0;
 
     public StackMachineParser(String filePath) throws IOException {
-        reader = Files.newBufferedReader(Paths.get(filePath));
+        filePaths = new ArrayList<>();
+        if(Paths.get(filePath).endsWith(".vm")){
+            filePaths.add(Paths.get(filePath));
+        }else {
+            if(Paths.get(filePath).endsWith("/")){
+                filePaths.add(Paths.get(filePath+"Sys.vm"));
+            }else{
+                filePaths.add(Paths.get(filePath+"/Sys.vm"));
+            }
+            Files.newDirectoryStream(Paths.get(filePath),
+                    path -> !path.toString().endsWith("Sys.vm") && path.toString().endsWith(".vm"))
+                    .forEach(filePaths:: add);
+        }
+
+        reader = Files.newBufferedReader(filePaths.get(currentFilePathIndex++));
         next();
     }
 
@@ -32,6 +51,12 @@ public class StackMachineParser implements Parser {
 
     private String readNext() throws IOException {
         String line = reader.readLine();
+
+        if(line == null && currentFilePathIndex < filePaths.size()){
+            reader = Files.newBufferedReader(filePaths.get(currentFilePathIndex++));
+            return readNext();
+        }
+
         if (line != null && (line.trim().startsWith("//")|| line.trim().length() == 0 )) return readNext();
         return line == null ? line : line.replaceFirst("//.*", "").trim();
     }
