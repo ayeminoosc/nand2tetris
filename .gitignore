@@ -5,3 +5,5 @@
 *.asm
 *.out
 *.dat
+*-tokens.xml
+build/*
